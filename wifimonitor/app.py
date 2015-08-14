@@ -19,6 +19,8 @@ arg_parser.add_argument('-i', '--interface', default='mon0',
                         help='Interface to monitor.')
 arg_parser.add_argument('-t', '--timeout', default=60*5,
                         help='Timeout.')
+arg_parser.add_argument('--threshold', default=200,
+                        help='Signal strength threshold. maximum is 255.')
 
 
 def channel_hopper(interface):
@@ -52,15 +54,15 @@ def PacketHandler(pkt):
         bssid = get_station_bssid(pkt)
     else:
         return
-    # 0 dB == 256
+    # 0 dB == 255
     strength = ord(pkt.notdecoded[-4])
-    if strength >= 200:
+    if strength >= config['threshold']:
         pipeline = redis_connection.pipeline()
         pipeline.incr(bssid)
         pipeline.expire(bssid, config['timeout'])
         result = pipeline.execute()
         count = result[0]
-        if count == 5 and strength >= 200:
+        if count == 5:
             speak('Wi-Fi device found')
 
     now = datetime.datetime.now()
@@ -71,6 +73,7 @@ def main():
     args = arg_parser.parse_args()
     config['interface'] = args.interface
     config['timeout'] = args.timeout
+    config['threshold'] = args.threshold
     thread = threading.Thread(target=channel_hopper,
                               args=(config['interface'],))
     thread.setDaemon(True)
