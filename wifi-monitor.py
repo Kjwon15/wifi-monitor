@@ -8,7 +8,10 @@ from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11ProbeReq
 from scapy.all import sniff
 
+from tts import speak
+
 redis_connection = redis.Redis()
+TIMEOUT = 60 * 5  # 5 minutes
 
 def channel_hopper(interface):
     while 1:
@@ -44,7 +47,11 @@ def PacketHandler(pkt):
     if strength >= 200:
         pipeline = redis_connection.pipeline()
         pipeline.incr(bssid)
-        pipeline.expire(bssid, 30)
+        pipeline.expire(bssid, TIMEOUT)
+        result = pipeline.execute()
+        count = result[0]
+        if count == 5 and strength >= 200:
+            speak('Wi-Fi device found')
 
     now = datetime.datetime.now()
     print('{} {} {}'.format(now, bssid, strength))
