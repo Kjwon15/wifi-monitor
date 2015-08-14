@@ -8,7 +8,7 @@ from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11ProbeReq
 from scapy.all import sniff
 
-from tts import speak
+from wifimonitor.tts import speak
 
 redis_connection = redis.Redis()
 TIMEOUT = 60 * 5  # 5 minutes
@@ -57,8 +57,12 @@ def PacketHandler(pkt):
     print('{} {} {}'.format(now, bssid, strength))
 
 
-interface = 'wlan1'
-thread = threading.Thread(target=channel_hopper, args=(interface,))
-thread.setDaemon(True)
-thread.start()
-sniff(iface=interface, prn=PacketHandler)
+def main():
+    interface = 'wlan1'
+    thread = threading.Thread(target=channel_hopper, args=(interface,))
+    thread.setDaemon(True)
+    thread.start()
+    sniff(iface=interface, prn=PacketHandler)
+
+if __name__ == '__main__':
+    main()
