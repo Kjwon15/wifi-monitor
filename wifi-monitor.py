@@ -1,11 +1,14 @@
 import datetime
+import redis
+import subprocess
 import threading
 import time
-import subprocess
 
 from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11ProbeReq
 from scapy.all import sniff
+
+redis_connection = redis.Redis()
 
 def channel_hopper(interface):
     while 1:
@@ -38,6 +41,11 @@ def PacketHandler(pkt):
         return
     # 0 dB == 256
     strength = ord(pkt.notdecoded[-4])
+    if strength >= 200:
+        pipeline = redis_connection.pipeline()
+        pipeline.incr(bssid)
+        pipeline.expire(bssid, 30)
+
     now = datetime.datetime.now()
     print('{} {} {}'.format(now, bssid, strength))
 
