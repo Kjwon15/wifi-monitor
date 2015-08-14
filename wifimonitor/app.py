@@ -13,6 +13,7 @@ from wifimonitor.tts import speak
 redis_connection = redis.Redis()
 TIMEOUT = 60 * 5  # 5 minutes
 
+
 def channel_hopper(interface):
     while 1:
         for channel in range(1, 13 + 1):
@@ -27,7 +28,8 @@ def hasflag(pkt, field_name, value):
             return False
         return field.i2s[val] == value
     else:
-        return (1 << field.names.index([value])) & getattr(pkt, field_name) != 0
+        return ((1 << field.names.index([value])) &
+                getattr(pkt, field_name)) != 0
 
 
 def get_station_bssid(pkt):
@@ -36,9 +38,10 @@ def get_station_bssid(pkt):
     else:
         return pkt.addr1
 
+
 def PacketHandler(pkt):
     if any(pkt.haslayer(layer) for layer in (
-        Dot11Auth, Dot11ProbeReq, Dot11ProbeResp)):
+            Dot11Auth, Dot11ProbeReq, Dot11ProbeResp)):
         bssid = get_station_bssid(pkt)
     else:
         return

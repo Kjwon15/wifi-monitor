@@ -10,4 +10,3 @@ def speak(string, lang='en'):
     f.flush()
     subprocess.Popen(['mpg321', '-q', f.name]).wait()
     f.close()
-
