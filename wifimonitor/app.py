@@ -5,7 +5,7 @@ import threading
 import time
 
 from scapy.fields import EnumField
-from scapy.layers.dot11 import Dot11ProbeReq
+from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp
 from scapy.all import sniff
 
 from wifimonitor.tts import speak
@@ -37,10 +37,10 @@ def get_station_bssid(pkt):
         return pkt.addr1
 
 def PacketHandler(pkt):
-    bssid = get_station_bssid(pkt)
-    # Broadcast and multicast
-    if bssid == 'ff:ff:ff:ff:ff:ff' or \
-       bssid.startswith('01:00:5e'):
+    if any(pkt.haslayer(layer) for layer in (
+        Dot11Auth, Dot11ProbeReq, Dot11ProbeResp)):
+        bssid = get_station_bssid(pkt)
+    else:
         return
     # 0 dB == 256
     strength = ord(pkt.notdecoded[-4])
