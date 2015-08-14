@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import redis
 import subprocess
@@ -11,7 +12,13 @@ from scapy.all import sniff
 from wifimonitor.tts import speak
 
 redis_connection = redis.Redis()
-TIMEOUT = 60 * 5  # 5 minutes
+config = {}
+
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument('-i', '--interface', default='mon0',
+                        help='Interface to monitor.')
+arg_parser.add_argument('-t', '--timeout', default=60*5,
+                        help='Timeout.')
 
 
 def channel_hopper(interface):
@@ -50,7 +57,7 @@ def PacketHandler(pkt):
     if strength >= 200:
         pipeline = redis_connection.pipeline()
         pipeline.incr(bssid)
-        pipeline.expire(bssid, TIMEOUT)
+        pipeline.expire(bssid, config['timeout'])
         result = pipeline.execute()
         count = result[0]
         if count == 5 and strength >= 200:
@@ -61,11 +68,14 @@ def PacketHandler(pkt):
 
 
 def main():
-    interface = 'wlan1'
-    thread = threading.Thread(target=channel_hopper, args=(interface,))
+    args = arg_parser.parse_args()
+    config['interface'] = args.interface
+    config['timeout'] = args.timeout
+    thread = threading.Thread(target=channel_hopper,
+                              args=(config['interface'],))
     thread.setDaemon(True)
     thread.start()
-    sniff(iface=interface, prn=PacketHandler)
+    sniff(iface=config['interface'], prn=PacketHandler)
 
 if __name__ == '__main__':
     main()
