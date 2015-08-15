@@ -78,7 +78,10 @@ def main():
                               args=(config['interface'],))
     thread.setDaemon(True)
     thread.start()
-    sniff(iface=config['interface'], prn=PacketHandler)
+    sniff(iface=config['interface'], prn=PacketHandler,
+          filter='type mgt and '
+          '(subtype auth or subtype probe-req or subtype probe-resp)',
+          store=False)
 
 if __name__ == '__main__':
     main()
