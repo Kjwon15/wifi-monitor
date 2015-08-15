@@ -17,9 +17,9 @@ config = {}
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-i', '--interface', default='mon0',
                         help='Interface to monitor.')
-arg_parser.add_argument('-t', '--timeout', default=60*5,
+arg_parser.add_argument('-t', '--timeout', type=int,  default=60*5,
                         help='Timeout.')
-arg_parser.add_argument('--threshold', default=200,
+arg_parser.add_argument('--threshold', type=int, default=200,
                         help='Signal strength threshold. maximum is 255.')
 
 
