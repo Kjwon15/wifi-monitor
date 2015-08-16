@@ -1,9 +1,6 @@
 import argparse
 import datetime
 import redis
-import subprocess
-import threading
-import time
 
 from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp
@@ -21,13 +18,6 @@ arg_parser.add_argument('-t', '--timeout', type=int,  default=60*5,
                         help='Timeout.')
 arg_parser.add_argument('--threshold', type=int, default=200,
                         help='Signal strength threshold. maximum is 255.')
-
-
-def channel_hopper(interface):
-    while 1:
-        for channel in range(1, 13 + 1):
-            subprocess.Popen(['iwconfig', interface, 'channel', str(channel)])
-            time.sleep(1)
 
 
 def hasflag(pkt, field_name, value):
@@ -74,10 +64,7 @@ def main():
     config['interface'] = args.interface
     config['timeout'] = args.timeout
     config['threshold'] = args.threshold
-    thread = threading.Thread(target=channel_hopper,
-                              args=(config['interface'],))
-    thread.setDaemon(True)
-    thread.start()
+
     sniff(iface=config['interface'], prn=PacketHandler,
           filter='type mgt and '
           '(subtype auth or subtype probe-req or subtype probe-resp)',
