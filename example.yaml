@@ -2,4 +2,4 @@ interface: mon0
 timeout: 300
 threshold: 200 # Maximum is 255
 devices:
-    - ff:ff:ff:ff:ff:ff: Broadcast
+    ff:ff:ff:ff:ff:ff: Broadcast
