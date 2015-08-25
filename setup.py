@@ -7,8 +7,11 @@ PWD = path.abspath(path.dirname(__file__))
 with open(path.join(PWD, 'README.rst')) as fp:
     long_description = fp.read()
 
-with open(path.join(PWD, 'requirements.txt')) as fp:
-    install_requires = [line.strip() for line in fp.readlines()]
+install_requires = [
+    'gTTS>=1.0.6',
+    'redis>=2.10.3',
+    'scapy>=2.3.1',
+]
 
 setup(
     name='wifi-monitor',
