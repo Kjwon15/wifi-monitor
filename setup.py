@@ -8,6 +8,7 @@ with open(path.join(PWD, 'README.rst')) as fp:
     long_description = fp.read()
 
 install_requires = [
+    'PyYAML>=3.11',
     'gTTS>=1.0.6',
     'redis>=2.10.3',
     'scapy>=2.3.1',
