@@ -3,8 +3,7 @@ import datetime
 import redis
 
 from scapy.fields import EnumField
-from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp
-from scapy.all import sniff
+from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
 
 from wifimonitor.tts import speak
 
