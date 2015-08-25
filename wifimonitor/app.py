@@ -50,7 +50,10 @@ def PacketHandler(pkt):
         result = pipeline.execute()
         count = result[0]
         if count == 5:
-            speak('Wi-Fi device found')
+            if bssid in config['devices']:
+                speak('{} found'.format(config['devices'][bssid]))
+            else:
+                speak('Wi-Fi device {} found'.format(bssid[:8]))
 
     now = datetime.datetime.now()
     print('{} {} {}'.format(now, bssid, strength))
