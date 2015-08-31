@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import redis
+import yaml
 
 from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
@@ -11,12 +12,8 @@ redis_connection = redis.Redis()
 config = {}
 
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument('-i', '--interface', default='mon0',
-                        help='Interface to monitor.')
-arg_parser.add_argument('-t', '--timeout', type=int,  default=60*5,
-                        help='Timeout.')
-arg_parser.add_argument('--threshold', type=int, default=200,
-                        help='Signal strength threshold. maximum is 255.')
+arg_parser.add_argument('-c', '--config',
+                        help='Configuration file.')
 
 
 def hasflag(pkt, field_name, value):
@@ -52,7 +49,10 @@ def PacketHandler(pkt):
         result = pipeline.execute()
         count = result[0]
         if count == 5:
-            speak('Wi-Fi device found')
+            if bssid in config['devices']:
+                speak('{} found'.format(config['devices'][bssid]))
+            else:
+                speak('Wi-Fi device {} found'.format(bssid[:8]))
 
     now = datetime.datetime.now()
     print('{} {} {}'.format(now, bssid, strength))
@@ -60,9 +60,14 @@ def PacketHandler(pkt):
 
 def main():
     args = arg_parser.parse_args()
-    config['interface'] = args.interface
-    config['timeout'] = args.timeout
-    config['threshold'] = args.threshold
+    config_file = args.config
+    if config_file:
+        try:
+            with open(config_file) as fp:
+                config.update(yaml.load(fp.read()))
+        except:
+            # Cannot read configuration file
+            pass
 
     sniff(iface=config['interface'], prn=PacketHandler,
           filter='type mgt and '
