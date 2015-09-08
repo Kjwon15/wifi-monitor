@@ -7,6 +7,7 @@ from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
 
 from wifimonitor.tts import speak
+from wifimonitor.mac import get_mac_vendor
 
 redis_connection = redis.Redis()
 config = {}
@@ -52,7 +53,7 @@ def PacketHandler(pkt):
             if bssid in config['devices']:
                 speak('{} found'.format(config['devices'][bssid]))
             else:
-                speak('Wi-Fi device {} found'.format(bssid[:8]))
+                speak('Unknown {} device found'.format(get_mac_vendor(bssid)))
 
     now = datetime.datetime.now()
     print('{} {} {}'.format(now, bssid, strength))
