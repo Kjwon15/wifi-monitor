@@ -69,6 +69,7 @@ def main():
             # Cannot read configuration file
             pass
 
+    speak('Starting scanner')
     sniff(iface=config['interface'], prn=PacketHandler,
           filter='type mgt and '
           '(subtype auth or subtype probe-req or subtype probe-resp)',
