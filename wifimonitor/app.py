@@ -36,11 +36,11 @@ def get_station_bssid(pkt):
 
 
 def PacketHandler(pkt):
-    if any(pkt.haslayer(layer) for layer in (
+    if not any(pkt.haslayer(layer) for layer in (
             Dot11Auth, Dot11ProbeReq, Dot11ProbeResp)):
-        bssid = get_station_bssid(pkt)
-    else:
         return
+
+    bssid = get_station_bssid(pkt)
     # 0 dB == 255
     strength = ord(pkt.notdecoded[-4])
     if strength >= config['threshold']:
