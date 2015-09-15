@@ -58,14 +58,15 @@ def PacketHandler(pkt):
         if count == 5:
             vendor = get_mac_vendor(bssid)
             vendor_short = vendor.split(None, 1)[0]
+            device_name = config['devices'].get(bssid, None)
 
-            if bssid in config['devices']:
-                speak('{} found'.format(config['devices'][bssid]))
+            if device_name:
+                speak('{} found'.format(device_name))
             else:
                 speak('Unknown {} device found'.format(vendor_short))
 
             logger.info('{} {} "{}"'.format(
-                bssid, strength, vendor
+                bssid, strength, device_name or vendor
             ))
 
     now = datetime.datetime.now()
