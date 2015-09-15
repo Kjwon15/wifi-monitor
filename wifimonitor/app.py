@@ -1,7 +1,10 @@
 import argparse
 import datetime
+import logging
 import redis
 import yaml
+
+from logging.handlers import WatchedFileHandler
 
 from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
@@ -9,12 +12,15 @@ from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
 from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
 
+logger = logging.getLogger(__name__)
 redis_connection = redis.Redis()
 config = {}
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-c', '--config',
                         help='Configuration file.')
+arg_parser.add_argument('-l', '--log-file',
+                        help='Log file')
 
 
 def hasflag(pkt, field_name, value):
@@ -50,13 +56,20 @@ def PacketHandler(pkt):
         result = pipeline.execute()
         count = result[0]
         if count == 5:
+            vendor = get_mac_vendor(bssid)
+            vendor_short = vendor.split(None, 1)[0]
+
             if bssid in config['devices']:
                 speak('{} found'.format(config['devices'][bssid]))
             else:
-                speak('Unknown {} device found'.format(get_mac_vendor(bssid)))
+                speak('Unknown {} device found'.format(vendor_short))
+
+            logger.info('{} {} "{}"'.format(
+                bssid, strength, vendor
+            ))
 
     now = datetime.datetime.now()
-    print('{} {} {}'.format(now, bssid, strength))
+    logger.debug('{} {}'.format(bssid, strength))
 
 
 def main():
@@ -69,6 +82,17 @@ def main():
         except:
             # Cannot read configuration file
             pass
+
+    if args.log_file:
+        handler = WatchedFileHandler(args.log_file)
+    else:
+        handler = logging.StreamHandler()
+
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
     speak('Starting scanner')
     sniff(iface=config['interface'], prn=PacketHandler,
