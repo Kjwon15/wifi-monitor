@@ -69,7 +69,6 @@ def PacketHandler(pkt):
                 bssid, strength, device_name or vendor
             ))
 
-    now = datetime.datetime.now()
     logger.debug('{} {}'.format(bssid, strength))
 
 
