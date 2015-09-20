@@ -7,6 +7,6 @@ def get_mac_vendor(mac):
         data = res.json()
         vendor = data[0]['company']
     except:
-        return
+        return "Unknown"
     else:
         return vendor
