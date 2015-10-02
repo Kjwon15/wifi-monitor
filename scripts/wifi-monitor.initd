@@ -1,0 +1,46 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          wifi-monitor
+# Required-Start:    $local-fs $network alsa-utils pulseaudio
+# Required-Stop:     $local-fs $network alsa-utils pulseaudio
+# Should-Start: 
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# description: Wi-Fi monitor service
+### END INIT INFO
+
+
+. /lib/lsb/init-functions
+
+PIDFILE='/var/run/wifi-monitor.pid'
+LOGFILE='/var/log/wifi-monitor.log'
+INTERFACE='wlan0'
+DAEMON='/home/kjwon15/.virtualenvs/wifi/bin/wifi-monitor '
+
+start() {
+    ifconfig $INTERFACE down
+    iwconfig $INTERFACE mode monitor
+    ifconfig $INTERFACE up
+
+    start-stop-daemon --start --make-pidfile --pidfile $PIDFILE --background --exec $DAEMON -- -c /home/kjwon15/git/wifi-monitor/config.yml --log-file $LOGFILE
+}
+
+stop() {
+    start-stop-daemon --stop --pidfile $PIDFILE
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    restart)
+	stop
+	start
+	;;
+    status)
+	status_of_proc -p $PIDFILE $DAEMON 'wifi monitor'
+	;;
+esac
