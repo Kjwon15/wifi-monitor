@@ -1,5 +1,9 @@
 interface: mon0
 timeout: 300
 threshold: 200 # Maximum is 255
-devices:
-    ff:ff:ff:ff:ff:ff: Broadcast
+users:
+- name: kjwon15
+  devices:
+    00:00:00:00:00:01: mobile-phone
+  ignored-devices:
+    00:00:00:00:00:02: laptop

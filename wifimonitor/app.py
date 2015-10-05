@@ -15,6 +15,7 @@ from wifimonitor.mac import get_mac_vendor
 logger = logging.getLogger(__name__)
 redis_connection = redis.Redis()
 config = {}
+devices = {}
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-c', '--config',
@@ -46,30 +47,60 @@ def PacketHandler(pkt):
             Dot11Auth, Dot11ProbeReq, Dot11ProbeResp)):
         return
 
-    bssid = get_station_bssid(pkt)
+    mac_address = get_station_bssid(pkt)
     # 0 dB == 255
     strength = ord(pkt.notdecoded[-4])
-    if strength >= config['threshold']:
+
+    if strength < config['threshold']:
+        return
+
+    if mac_address in devices and not devices[mac_address]['ignored']:
+        username = devices[mac_address]['username']
         pipeline = redis_connection.pipeline()
-        pipeline.incr(bssid)
-        pipeline.expire(bssid, config['timeout'])
+        pipeline.incr(username)
+        pipeline.expire(username, config['timeout'])
         result = pipeline.execute()
         count = result[0]
-        if count == 5:
-            vendor = get_mac_vendor(bssid)
-            vendor_short = vendor.split(None, 1)[0]
-            device_name = config['devices'].get(bssid, None)
 
-            if device_name:
-                speak('{} found'.format(device_name))
-            else:
-                speak('Unknown {} device found'.format(vendor_short))
+        if count == 1:
+            device_name = '{}:{}'.format(
+                username, devices[mac_address]['name'])
+            speak('Welcome {}'.format(username))
 
             logger.info('{} {} "{}"'.format(
-                bssid, strength, device_name or vendor
+                mac_address, strength, device_name
+            ))
+    elif mac_address not in devices:
+        pipeline = redis_connection.pipeline()
+        pipeline.incr(mac_address)
+        pipeline.expire(mac_address, config['timeout'])
+        result = pipeline.execute()
+        count = result[0]
+
+        if count == 1:
+            vendor = get_mac_vendor(mac_address)
+            speak('Welcome guest')
+            logger.info('{} {} "{}"'.format(
+                 mac_address, strength, vendor
             ))
 
-    logger.debug('{} {}'.format(bssid, strength))
+    logger.debug('{} {}'.format(mac_address, strength))
+
+
+def register_devices(config):
+    for user in config['users']:
+        for mac, device_name in user['devices'].items():
+            devices[mac] = {
+                'username': user['name'],
+                'name': device_name,
+                'ignored': False,
+            }
+        for mac, device_name in user['ignored-devices'].items():
+            devices[mac] = {
+                'username': user['name'],
+                'name': device_name,
+                'ignored': True,
+            }
 
 
 def main():
@@ -82,6 +113,8 @@ def main():
         except:
             # Cannot read configuration file
             pass
+
+    register_devices(config)
 
     if args.log_file:
         handler = WatchedFileHandler(args.log_file)
