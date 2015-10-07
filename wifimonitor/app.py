@@ -95,12 +95,13 @@ def register_devices(config):
                 'name': device_name,
                 'ignored': False,
             }
-        for mac, device_name in user['ignored-devices'].items():
-            devices[mac] = {
-                'username': user['name'],
-                'name': device_name,
-                'ignored': True,
-            }
+        if 'ignored-devices' in user:
+            for mac, device_name in user['ignored-devices'].items():
+                devices[mac] = {
+                    'username': user['name'],
+                    'name': device_name,
+                    'ignored': True,
+                }
 
 
 def main():
