@@ -56,9 +56,12 @@ def PacketHandler(pkt):
 
     if mac_address in devices and not devices[mac_address]['ignored']:
         username = devices[mac_address]['username']
+        vendor_part = mac_address[:8]
         pipeline = redis_connection.pipeline()
         pipeline.incr(username)
         pipeline.expire(username, config['timeout'])
+        pipeline.incr(vendor_part)
+        pipeline.expire(vendor_part, config['timeout'])
         result = pipeline.execute()
         count = result[0]
 
@@ -71,9 +74,10 @@ def PacketHandler(pkt):
                 mac_address, strength, device_name
             ))
     elif mac_address not in devices:
+        vendor_part = mac_address[:8]
         pipeline = redis_connection.pipeline()
-        pipeline.incr(mac_address)
-        pipeline.expire(mac_address, config['timeout'])
+        pipeline.incr(vendor_part)
+        pipeline.expire(vendor_part, config['timeout'])
         result = pipeline.execute()
         count = result[0]
 
