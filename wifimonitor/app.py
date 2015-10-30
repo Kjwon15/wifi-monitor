@@ -4,7 +4,7 @@ import logging
 import redis
 import yaml
 
-from logging.handlers import WatchedFileHandler
+from logging.handlers import RotatingFileHandler
 
 from scapy.fields import EnumField
 from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
@@ -118,7 +118,7 @@ def main():
     register_devices(config)
 
     if args.log_file:
-        handler = WatchedFileHandler(args.log_file)
+        handler = RotatingFileHandler(args.log_file)
     else:
         handler = logging.StreamHandler()
 
