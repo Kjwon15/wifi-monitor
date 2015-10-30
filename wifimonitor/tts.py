@@ -3,9 +3,11 @@ import tempfile
 import subprocess
 import threading
 import Queue
+import pyttsx
 
 
 speak_queue = Queue.Queue()
+engine = pyttsx.init()
 
 def _speak():
     while 1:
@@ -17,6 +19,9 @@ def _speak():
             f.flush()
             subprocess.Popen(['mpg321', '-q', f.name]).wait()
             f.close()
+        except:
+            engine.say(string)
+            engine.runAndWait()
         finally:
             speak_queue.task_done()
 
