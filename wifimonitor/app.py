@@ -1,13 +1,15 @@
 import argparse
-import datetime
 import logging
 import redis
+import subprocess
+import threading
+import time
 import yaml
 
 from logging.handlers import RotatingFileHandler
 
 from scapy.fields import EnumField
-from scapy.layers.dot11 import Dot11Auth, Dot11ProbeReq, Dot11ProbeResp, sniff
+from scapy.layers.dot11 import Dot11, Dot11ProbeReq, sniff
 
 from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
@@ -24,30 +26,42 @@ arg_parser.add_argument('-l', '--log-file',
                         help='Log file')
 
 
-def hasflag(pkt, field_name, value):
-    field, val = pkt.getfield_and_val(field_name)
-    if isinstance(field, EnumField):
-        if val not in field.i2s:
-            return False
-        return field.i2s[val] == value
-    else:
-        return ((1 << field.names.index([value])) &
-                getattr(pkt, field_name)) != 0
+def channel_hopper(iface):
+    rng = range(1, 13 + 1)
+    while 1:
+        for channel in rng:
+            logger.debug('hopping channel {}'.format(channel))
+            subprocess.Popen([
+                'iwconfig', iface, 'channel', str(channel)
+            ]).wait()
+            time.sleep(1)
 
 
 def get_station_bssid(pkt):
-    if pkt.haslayer(Dot11ProbeReq) or hasflag(pkt, 'FCfield', 'to-DS'):
-        return pkt.addr2
-    else:
-        return pkt.addr1
+    ds_field = pkt.getfieldval('FCfield') & 0x03
+    if pkt.type == 0 and pkt.subtype == 8:
+        return
+
+    if ds_field == 0:  # to-DS: 0, from-DS: 0
+        src = pkt.addr2
+    elif ds_field == 1:  # to-DS: 1, from-DS: 0
+        src = pkt.addr2
+    elif ds_field == 2:  # to-DS: 0, from-DS: 1
+        src = pkt.addr3
+    elif ds_field == 3:  # to-DS: 1, from-DS: 1
+        src = pkt.addr4
+
+    return src
 
 
 def PacketHandler(pkt):
-    if not any(pkt.haslayer(layer) for layer in (
-            Dot11Auth, Dot11ProbeReq, Dot11ProbeResp)):
+    if not pkt.haslayer(Dot11):
         return
 
     mac_address = get_station_bssid(pkt)
+    if mac_address is None:
+        return
+
     # 0 dB == 255
     strength = ord(pkt.notdecoded[-4])
 
@@ -128,10 +142,13 @@ def main():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+    hopper = threading.Thread(target=channel_hopper,
+                              args=(config['interface'],))
+    hopper.setDaemon(True)
+    hopper.start()
+
     speak('Starting scanner')
     sniff(iface=config['interface'], prn=PacketHandler,
-          filter='type mgt and '
-          '(subtype auth or subtype probe-req or subtype probe-resp)',
           store=False)
 
 if __name__ == '__main__':
