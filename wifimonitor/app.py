@@ -56,7 +56,7 @@ def get_station_bssid(pkt):
     return src
 
 
-def PacketHandler(pkt):
+def packet_handler(pkt):
     if not pkt.haslayer(Dot11):
         return
 
@@ -101,7 +101,7 @@ def PacketHandler(pkt):
             vendor = get_mac_vendor(mac_address)
             speak('Welcome guest')
             logger.info('{} {} "{}"'.format(
-                 mac_address, strength, vendor
+                mac_address, strength, vendor
             ))
 
     logger.debug('{} {}'.format(mac_address, strength))
@@ -154,7 +154,7 @@ def main():
     hopper.start()
 
     speak('Starting scanner')
-    sniff(iface=config['interface'], prn=PacketHandler,
+    sniff(iface=config['interface'], prn=packet_handler,
           store=False)
 
 if __name__ == '__main__':

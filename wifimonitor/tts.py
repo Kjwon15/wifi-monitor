@@ -9,6 +9,7 @@ import pyttsx
 speak_queue = Queue.Queue()
 engine = pyttsx.init()
 
+
 def _speak():
     while 1:
         string, lang = speak_queue.get()
