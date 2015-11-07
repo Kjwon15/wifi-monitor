@@ -19,12 +19,12 @@ def _speak():
             t.write_to_fp(f)
             f.flush()
             subprocess.Popen(['mpg321', '-q', f.name]).wait()
-            f.close()
         except:
             engine.say(string)
             engine.runAndWait()
         finally:
             speak_queue.task_done()
+            f.close()
 
 
 def speak(string, lang='en'):
