@@ -47,11 +47,9 @@ def get_station_bssid(pkt):
     elif ds_field == 1:  # to-DS: 1, from-DS: 0
         src = pkt.addr2
     elif ds_field == 2:  # to-DS: 0, from-DS: 1
-        if pkt.addr2 == pkt.addr3:  # source is same as BSSID
-            return
-        src = pkt.addr3
+        return
     elif ds_field == 3:  # to-DS: 1, from-DS: 1
-        src = pkt.addr4
+        return
 
     return src
 
