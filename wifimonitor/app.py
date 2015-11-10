@@ -70,11 +70,14 @@ def packet_handler(pkt):
     if strength < config['threshold']:
         return
 
-    if mac_address in devices and not devices[mac_address]['ignored']:
+    if mac_address in devices:
+        ignored = devices[mac_address]['ignored']
         username = devices[mac_address]['username']
         vendor_part = mac_address[:8]
+
         pipeline = redis_connection.pipeline()
-        pipeline.incr(username)
+        pipeline.incr(
+            username if not ignored else mac_address)
         pipeline.expire(username, config['timeout'])
         pipeline.incr(vendor_part)
         pipeline.expire(vendor_part, config['timeout'])
@@ -84,7 +87,8 @@ def packet_handler(pkt):
         if count == 1:
             device_name = '{}:{}'.format(
                 username, devices[mac_address]['name'])
-            speak('Welcome {}'.format(username))
+            if not ignored:
+                speak('Welcome {}'.format(username))
 
             logger.info('{} {} "{}"'.format(
                 mac_address, strength, device_name
