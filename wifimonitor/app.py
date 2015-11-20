@@ -1,16 +1,14 @@
 import argparse
 import logging
-import redis
 import subprocess
 import threading
 import time
-import yaml
-
 from logging.handlers import RotatingFileHandler
 
-from scapy.fields import EnumField
-from scapy.layers.dot11 import Dot11, Dot11ProbeReq, sniff
+import redis
 
+import yaml
+from scapy.layers.dot11 import Dot11, sniff
 from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
 
