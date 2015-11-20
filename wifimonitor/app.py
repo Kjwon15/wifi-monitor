@@ -74,7 +74,8 @@ def packet_handler(pkt):
         pipeline = redis_connection.pipeline()
         pipeline.incr(
             username if not ignored else mac_address)
-        pipeline.expire(username, config['timeout'])
+        if not ignored:
+            pipeline.expire(username, config['timeout'])
         pipeline.incr(vendor_part)
         pipeline.expire(vendor_part, config['timeout'])
         result = pipeline.execute()
