@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import logging
 import subprocess
 import threading
@@ -56,56 +57,74 @@ def packet_handler(pkt):
     if not pkt.haslayer(Dot11):
         return
 
-    mac_address = get_station_bssid(pkt)
-    if mac_address is None:
+    mac = get_station_bssid(pkt)
+    if mac is None:
         return
 
-    # 0 dB == 255
-    strength = ord(pkt.notdecoded[-4])
+    strength = get_signal_strength(pkt)
 
     if strength < config['threshold']:
         return
 
-    if mac_address in devices:
-        ignored = devices[mac_address]['ignored']
-        username = devices[mac_address]['username']
-        vendor_part = mac_address[:8]
-
-        pipeline = redis_connection.pipeline()
-        pipeline.incr(
-            username if not ignored else mac_address)
-        if not ignored:
-            pipeline.expire(username, config['timeout'])
-        pipeline.incr(vendor_part)
-        pipeline.expire(vendor_part, config['timeout'])
-        result = pipeline.execute()
-        count = result[0]
-
-        if count == 1:
-            device_name = '{}:{}'.format(
-                username, devices[mac_address]['name'])
+    if is_new_entry(mac):
+        if mac in devices:
+            username = devices[mac]['username']
+            device_name = devices[mac]['devicename']
+            ignored = devices[mac]['ignored']
             if not ignored:
                 speak('Welcome {}'.format(username))
-
-            logger.info('{} {} "{}"'.format(
-                mac_address, strength, device_name
-            ))
-    elif mac_address not in devices:
-        vendor_part = mac_address[:8]
-        pipeline = redis_connection.pipeline()
-        pipeline.incr(vendor_part)
-        pipeline.expire(vendor_part, config['timeout'])
-        result = pipeline.execute()
-        count = result[0]
-
-        if count == 1:
-            vendor = get_mac_vendor(mac_address)
+        else:
+            vendor_name = get_mac_vendor(mac)
             speak('Welcome guest')
-            logger.info('{} {} "{}"'.format(
-                mac_address, strength, vendor
-            ))
 
-    logger.debug('{} {}'.format(mac_address, strength))
+        logger.info('{} {} "{}"'.format(mac, strength, device_name if mac in devices else vendor_name))
+
+    update_mac(mac)
+
+    logger.debug('{} {}'.format(mac, strength))
+
+
+def update_mac(mac):
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    pipeline = redis_connection.pipeline()
+    if mac in devices:
+        username = devices[mac]['username']
+        device_name = devices[mac]['devicename']
+        ignored = devices[mac]['ignored']
+        pipeline.setnx(device_name, timestamp)
+        pipeline.expire(device_name, config['timeout'])
+
+        if not ignored:
+            pipeline.setnx(username, timestamp)
+            pipeline.expire(username, config['timeout'])
+
+    else:
+        pipeline.setnx(mac, config['timeout'])
+        pipeline.expire(mac, config['timeout'])
+
+    vendor_part = mac[:8]
+    pipeline.setnx(vendor_part, config['timeout'])
+    pipeline.expire(vendor_part, config['timeout'])
+
+    pipeline.execute()
+
+
+def get_signal_strength(pkt):
+    # 0 dB == 255
+    strength = ord(pkt.notdecoded[-4])
+    return strength
+
+
+def is_new_entry(mac):
+    if mac in devices:
+        ignored = devices[mac]['ignored']
+        username = devices[mac]['username']
+        device_name = devices[mac]['devicename']
+        key_name = username if not ignored else device_name
+    else:
+        key_name = mac[:8]
+
+    return not redis_connection.exists(key_name)
 
 
 def register_devices(config):
@@ -113,14 +132,14 @@ def register_devices(config):
         for mac, device_name in user['devices'].items():
             devices[mac] = {
                 'username': user['name'],
-                'name': device_name,
+                'devicename': '{}:{}'.format(user['name'], device_name),
                 'ignored': False,
             }
         if 'ignored-devices' in user:
             for mac, device_name in user['ignored-devices'].items():
                 devices[mac] = {
                     'username': user['name'],
-                    'name': device_name,
+                    'devicename': '{}:{}'.format(user['name'], device_name),
                     'ignored': True,
                 }
 
