@@ -25,10 +25,9 @@ arg_parser.add_argument('-l', '--log-file',
                         help='Log file')
 
 
-def channel_hopper(iface):
-    rng = range(1, 13 + 1)
+def channel_hopper(iface, channels):
     while 1:
-        for channel in rng:
+        for channel in channels:
             logger.debug('hopping channel {}'.format(channel))
             subprocess.Popen([
                 'iwconfig', iface, 'channel', str(channel)
@@ -169,7 +168,7 @@ def main():
     logger.setLevel(logging.INFO)
 
     hopper = threading.Thread(target=channel_hopper,
-                              args=(config['interface'],))
+                              args=(config['interface'], config['channels']))
     hopper.setDaemon(True)
     hopper.start()
 
