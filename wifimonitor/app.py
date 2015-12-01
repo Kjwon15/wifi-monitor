@@ -116,6 +116,9 @@ def get_signal_strength(pkt):
 
 
 def is_new_entry(mac):
+    if is_ignored_prefix(mac):
+        return False
+
     if mac in devices:
         ignored = devices[mac]['ignored']
         username = devices[mac]['username']
@@ -125,6 +128,12 @@ def is_new_entry(mac):
         key_name = mac[:8]
 
     return not redis_connection.exists(key_name)
+
+
+def is_ignored_prefix(mac):
+    return any(
+        mac.startswith(prefix)
+        for prefix in config['ignored_prefixes'])
 
 
 def register_devices(config):
