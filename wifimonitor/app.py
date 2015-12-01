@@ -76,7 +76,8 @@ def packet_handler(pkt):
             vendor_name = get_mac_vendor(mac)
             speak('Welcome guest')
 
-        logger.info('{} {} "{}"'.format(mac, strength, device_name if mac in devices else vendor_name))
+        logger.info('{} {} "{}"'.format(
+            mac, strength, device_name if mac in devices else vendor_name))
 
     update_mac(mac)
 
