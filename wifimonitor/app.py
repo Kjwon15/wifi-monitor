@@ -102,10 +102,6 @@ def update_mac(mac):
         pipeline.setnx(mac, config['timeout'])
         pipeline.expire(mac, config['timeout'])
 
-    vendor_part = mac[:8]
-    pipeline.setnx(vendor_part, config['timeout'])
-    pipeline.expire(vendor_part, config['timeout'])
-
     pipeline.execute()
 
 
@@ -125,7 +121,7 @@ def is_new_entry(mac):
         device_name = devices[mac]['devicename']
         key_name = username if not ignored else device_name
     else:
-        key_name = mac[:8]
+        key_name = mac
 
     return not redis_connection.exists(key_name)
 
