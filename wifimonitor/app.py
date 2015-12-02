@@ -133,7 +133,7 @@ def is_new_entry(mac):
 def is_ignored_prefix(mac):
     return any(
         mac.startswith(prefix)
-        for prefix in config['ignored_prefixes'])
+        for prefix in config['ignored_prefixes'].keys())
 
 
 def register_devices(config):
