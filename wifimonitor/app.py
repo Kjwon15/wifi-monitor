@@ -134,12 +134,13 @@ def is_ignored_prefix(mac):
 
 def register_devices(config):
     for user in config['users']:
-        for mac, device_name in user['devices'].items():
-            devices[mac] = {
-                'username': user['name'],
-                'devicename': '{}:{}'.format(user['name'], device_name),
-                'ignored': False,
-            }
+        if 'devices' in user:
+            for mac, device_name in user['devices'].items():
+                devices[mac] = {
+                    'username': user['name'],
+                    'devicename': '{}:{}'.format(user['name'], device_name),
+                    'ignored': False,
+                }
         if 'ignored-devices' in user:
             for mac, device_name in user['ignored-devices'].items():
                 devices[mac] = {
