@@ -1,30 +1,32 @@
-import gtts
-import tempfile
-import subprocess
-import threading
 import Queue
+import os
+import subprocess
+import tempfile
+import threading
+
+import gtts
 import pyttsx
 
 
 speak_queue = Queue.Queue()
 engine = pyttsx.init()
+cachedir = tempfile.mkdtemp(prefix='wifimon')
 
 
 def _speak():
     while 1:
         string, lang = speak_queue.get()
         try:
-            t = gtts.gTTS(string, lang=lang)
-            f = tempfile.NamedTemporaryFile()
-            t.write_to_fp(f)
-            f.flush()
-            subprocess.Popen(['mpg321', '-q', f.name]).wait()
+            filename = os.path.join(cachedir, hashlib.md5(string).hexdigest())
+            if not os.exists(filename):
+                t = gtts.gTTS(string, lang=lang)
+                t.save(filename)
+            subprocess.Popen(['mpg321', '-q', filename]).wait()
         except:
             engine.say(string)
             engine.runAndWait()
         finally:
             speak_queue.task_done()
-            f.close()
 
 
 def speak(string, lang='en'):
