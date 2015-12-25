@@ -60,6 +60,9 @@ def packet_handler(pkt):
     if mac is None:
         return
 
+    if is_ignored_prefix(mac):
+        return
+
     strength = get_signal_strength(pkt)
 
     if strength < config['threshold']:
