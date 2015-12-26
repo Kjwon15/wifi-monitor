@@ -102,7 +102,7 @@ def update_mac(mac):
             pipeline.expire(username, config['timeout'])
 
     else:
-        pipeline.setnx(mac, config['timeout'])
+        pipeline.setnx(mac, timestamp)
         pipeline.expire(mac, config['timeout'])
 
     pipeline.execute()
