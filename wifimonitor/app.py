@@ -82,28 +82,31 @@ def packet_handler(pkt):
         logger.info('{} {} "{}"'.format(
             mac, strength, device_name if mac in devices else vendor_name))
 
-    update_mac(mac)
+    update_mac(mac, strength)
 
     logger.debug('{} {}'.format(mac, strength))
 
 
-def update_mac(mac):
+def update_mac(mac, strength):
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     pipeline = redis_connection.pipeline()
+
+    def update(name, strength):
+        pipeline.hsetnx(name, 'since', timestamp)
+        pipeline.hset(name, 'strength', strength)
+        pipeline.expire(name, config['timeout'])
+
     if mac in devices:
         username = devices[mac]['username']
         device_name = devices[mac]['devicename']
         ignored = devices[mac]['ignored']
-        pipeline.setnx(device_name, timestamp)
-        pipeline.expire(device_name, config['timeout'])
+        update(device_name, strength)
 
         if not ignored:
-            pipeline.setnx(username, timestamp)
-            pipeline.expire(username, config['timeout'])
+            update(username, strength)
 
     else:
-        pipeline.setnx(mac, timestamp)
-        pipeline.expire(mac, config['timeout'])
+        update(mac, strength)
 
     pipeline.execute()
 
