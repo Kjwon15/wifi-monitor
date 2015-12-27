@@ -137,7 +137,7 @@ def is_new_entry(mac):
 
 
 def is_ignored_prefix(mac):
-    if not 'ignored_prefixes' in config:
+    if 'ignored_prefixes' not in config:
         return False
     return any(
         mac.startswith(prefix)
@@ -145,7 +145,7 @@ def is_ignored_prefix(mac):
 
 
 def register_devices(config):
-    if not 'users' in config:
+    if 'users' not in config:
         return
 
     for user in config['users']:
@@ -189,7 +189,7 @@ def main():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    channels = config.get('channels', range(1,13+1))
+    channels = config.get('channels', range(1, 13+1))
 
     hopper = threading.Thread(target=channel_hopper,
                               args=(config['interface'], channels))
