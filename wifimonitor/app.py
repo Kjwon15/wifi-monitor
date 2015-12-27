@@ -56,16 +56,15 @@ def packet_handler(pkt):
     if not pkt.haslayer(Dot11):
         return
 
+    strength = get_signal_strength(pkt)
+    if strength < config['threshold']:
+        return
+
     mac = get_station_bssid(pkt)
     if mac is None:
         return
 
     if is_ignored_prefix(mac):
-        return
-
-    strength = get_signal_strength(pkt)
-
-    if strength < config['threshold']:
         return
 
     if is_new_entry(mac):
