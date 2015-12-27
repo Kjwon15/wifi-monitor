@@ -133,12 +133,17 @@ def is_new_entry(mac):
 
 
 def is_ignored_prefix(mac):
+    if not 'ignored_prefixes' in config:
+        return False
     return any(
         mac.startswith(prefix)
         for prefix in config['ignored_prefixes'].keys())
 
 
 def register_devices(config):
+    if not 'users' in config:
+        return
+
     for user in config['users']:
         if 'devices' in user:
             for mac, device_name in user['devices'].items():
@@ -180,8 +185,10 @@ def main():
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
+    channels = config.get('channels', range(1,13+1))
+
     hopper = threading.Thread(target=channel_hopper,
-                              args=(config['interface'], config['channels']))
+                              args=(config['interface'], channels))
     hopper.setDaemon(True)
     hopper.start()
 
