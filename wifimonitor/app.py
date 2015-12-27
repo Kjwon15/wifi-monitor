@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 redis_connection = redis.Redis()
 config = {}
 devices = {}
+aps = set()
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-c', '--config',
@@ -38,6 +39,7 @@ def channel_hopper(iface, channels):
 def get_station_bssid(pkt):
     ds_field = pkt.getfieldval('FCfield') & 0x03
     if pkt.type == 0 and pkt.subtype == 8:
+        aps.add(pkt.addr2)
         return
 
     if ds_field == 0:  # to-DS: 0, from-DS: 0
@@ -47,6 +49,9 @@ def get_station_bssid(pkt):
     elif ds_field == 2:  # to-DS: 0, from-DS: 1
         return
     elif ds_field == 3:  # to-DS: 1, from-DS: 1
+        return
+
+    if src in aps:
         return
 
     return src
