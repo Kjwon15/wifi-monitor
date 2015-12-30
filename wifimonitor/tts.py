@@ -1,4 +1,5 @@
 import Queue
+import hashlib
 import os
 import subprocess
 import tempfile
@@ -16,17 +17,18 @@ cachedir = tempfile.mkdtemp(prefix='wifimon')
 def _speak():
     while 1:
         string, lang = speak_queue.get()
-        try:
-            filename = os.path.join(cachedir, hashlib.md5(string).hexdigest())
-            if not os.exists(filename):
+        filename = os.path.join(cachedir, hashlib.md5(string).hexdigest())
+        if not os.path.exists(filename):
+            try:
                 t = gtts.gTTS(string, lang=lang)
                 t.save(filename)
-            subprocess.Popen(['mpg321', '-q', filename]).wait()
-        except:
-            engine.say(string)
-            engine.runAndWait()
-        finally:
-            speak_queue.task_done()
+            except:
+                engine.say(string)
+                engine.runAndWait()
+            else:
+                subprocess.Popen(['mpg321', '-q', filename]).wait()
+            finally:
+                speak_queue.task_done()
 
 
 def speak(string, lang='en'):
