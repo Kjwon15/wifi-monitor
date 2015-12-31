@@ -18,7 +18,10 @@ def _speak():
     while 1:
         string, lang = speak_queue.get()
         filename = os.path.join(cachedir, hashlib.md5(string).hexdigest())
-        if not os.path.exists(filename):
+        if os.path.exists(filename):
+            subprocess.Popen(['mpg321', '-q', filename]).wait()
+            speak_queue.task_done()
+        else:
             try:
                 t = gtts.gTTS(string, lang=lang)
                 t.save(filename)
