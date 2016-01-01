@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 import redis
 
 import yaml
+import scapy.config
 from scapy.layers.dot11 import Dot11, sniff
 from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
@@ -54,23 +55,34 @@ def get_station_bssid(pkt):
     if src in aps:
         return
 
+    if src == '00:00:00:00:00:00':
+        return
+
     return src
 
 
-def packet_handler(pkt):
+def packet_filter(pkt):
     if not pkt.haslayer(Dot11):
         return
 
     strength = get_signal_strength(pkt)
+    mac = get_station_bssid(pkt)
+
     if strength < config['threshold']:
         return
 
-    mac = get_station_bssid(pkt)
     if mac is None:
         return
 
     if is_ignored_prefix(mac):
         return
+
+    return True
+
+
+def packet_handler(pkt):
+    strength = get_signal_strength(pkt)
+    mac = get_station_bssid(pkt)
 
     if is_new_entry(mac):
         if mac in devices:
@@ -197,8 +209,9 @@ def main():
     hopper.start()
 
     speak('Starting scanner')
+    scapy.config.conf.iface = config['interface']
     sniff(iface=config['interface'], prn=packet_handler,
-          store=False)
+          lfilter=packet_filter, store=False)
 
 if __name__ == '__main__':
     main()
