@@ -37,7 +37,7 @@ def channel_hopper(iface, channels):
             time.sleep(1)
 
 
-def get_station_bssid(pkt):
+def get_station_mac(pkt):
     ds_field = pkt.getfieldval('FCfield') & 0x03
     if pkt.type == 0 and pkt.subtype == 8:
         aps.add(pkt.addr2)
@@ -67,7 +67,7 @@ def packet_filter(pkt):
         return
 
     strength = get_signal_strength(pkt)
-    mac = get_station_bssid(pkt)
+    mac = get_station_mac(pkt)
 
     if strength < config['threshold']:
         return
@@ -83,7 +83,7 @@ def packet_filter(pkt):
 
 def packet_handler(pkt):
     strength = get_signal_strength(pkt)
-    mac = get_station_bssid(pkt)
+    mac = get_station_mac(pkt)
 
     if is_new_entry(mac):
         if mac in devices:
