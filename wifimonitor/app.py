@@ -48,6 +48,7 @@ def get_station_bssid(pkt):
     elif ds_field == 1:  # to-DS: 1, from-DS: 0
         src = pkt.addr2
     elif ds_field == 2:  # to-DS: 0, from-DS: 1
+        aps.add(pkt.addr2)
         return
     elif ds_field == 3:  # to-DS: 1, from-DS: 1
         return
@@ -211,7 +212,7 @@ def main():
     speak('Starting scanner')
     scapy.config.conf.iface = config['interface']
     sniff(iface=config['interface'], prn=packet_handler,
-          lfilter=packet_filter, store=False)
+          lfilter=packet_filter, filter='not subtype beacon', store=False)
 
 if __name__ == '__main__':
     main()
