@@ -154,7 +154,7 @@ def is_ignored_prefix(mac):
         return False
     return any(
         mac.startswith(prefix)
-        for prefix in config['ignored_prefixes'].keys())
+        for prefix in config['ignored_prefixes'])
 
 
 def register_devices(config):
