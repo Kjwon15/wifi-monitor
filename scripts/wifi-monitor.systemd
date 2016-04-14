@@ -1,0 +1,9 @@
+[Unit]
+Description=Wi-Fi monitor
+After=network.service
+
+[Service]
+ExecStart=/home/kjwon15/.virtualenvs/wifi/bin/wifi-monitor -c /home/kjwon15/git/wifi-monitor/config.yml
+
+[Install]
+WantedBy=multiuser.target
