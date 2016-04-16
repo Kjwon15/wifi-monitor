@@ -1,5 +1,5 @@
+# coding:utf-8
 import argparse
-import datetime
 import logging
 import subprocess
 import threading
@@ -104,11 +104,12 @@ def packet_handler(pkt):
 
 
 def update_mac(mac, strength):
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = time.time()
     pipeline = redis_connection.pipeline()
 
     def update(name, strength):
         pipeline.hsetnx(name, 'since', timestamp)
+        pipeline.hset(name, 'lastseen', timestamp)
         pipeline.hset(name, 'strength', strength)
         pipeline.expire(name, config['timeout'])
 
