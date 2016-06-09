@@ -24,6 +24,8 @@ arg_parser.add_argument('-c', '--config',
                         help='Configuration file.')
 arg_parser.add_argument('-l', '--log-file',
                         help='Log file')
+arg_parser.add_argument('-v', '--verbose', action='store_true',
+                        help='Verbose output.')
 
 
 def channel_hopper(iface, channels):
@@ -200,7 +202,10 @@ def main():
 
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
     channels = config.get('channels', range(1, 13+1))
 
