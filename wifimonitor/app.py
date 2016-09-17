@@ -10,7 +10,8 @@ import redis
 
 import yaml
 import scapy.config
-from scapy.layers.dot11 import Dot11, sniff
+from scapy.layers.dot11 import (
+    Dot11, Dot11ProbeReq, Dot11ProbeResp, Dot11Beacon, sniff)
 from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
 
@@ -40,9 +41,13 @@ def channel_hopper(iface, channels):
 
 def get_station_mac(pkt):
     ds_field = pkt.getfieldval('FCfield') & 0x03
-    if pkt.type == 0 and pkt.subtype == 8:
-        redis_connection.sadd('aps', pkt.addr2)
-        return
+    if pkt.type == 0:
+        if any(pkt.haslayer(layer)
+               for layer in (Dot11ProbeResp, Dot11Beacon)):
+            redis_connection.sadd('aps', pkt.addr2)
+            return
+        elif pkt.haslayer(Dot11ProbeReq):
+            return
 
     if ds_field == 0:  # to-DS: 0, from-DS: 0
         src = pkt.addr2
