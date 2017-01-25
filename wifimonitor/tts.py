@@ -1,4 +1,3 @@
-import Queue
 import hashlib
 import os
 import requests
