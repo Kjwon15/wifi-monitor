@@ -6,6 +6,8 @@ import tempfile
 
 import pyttsx
 
+from functools import wraps
+
 from multiprocessing.pool import ThreadPool
 
 
@@ -20,12 +22,13 @@ if not os.path.exists(cachedir):
     os.mkdir(cachedir)
 
 
-def async(decorated):
+def async(f):
 
-    def send(*args, **kwargs):
-        return pool.apply_async(decorated, args, kwargs)
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return pool.apply_async(f, args, kwargs)
 
-    return send
+    return wrapper
 
 
 @async
