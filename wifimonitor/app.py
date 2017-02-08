@@ -46,7 +46,7 @@ def handle_expire():
     pubsub = redis_connection.pubsub()
     pubsub.psubscribe('__key*__:expired')
     for msg in pubsub.listen():
-        if msg['type'] != 'message':
+        if msg['type'] != 'pmessage':
             continue
 
         data = msg['data'].decode('utf-8')
