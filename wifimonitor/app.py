@@ -42,6 +42,19 @@ def channel_hopper(iface, channels):
             time.sleep(1)
 
 
+def handle_expire():
+    pubsub = redis_connection.pubsub()
+    pubsub.psubscribe('__key*__:expired')
+    for msg in pubsub.listen():
+        if msg['type'] != 'message':
+            continue
+
+        data = msg['data'].decode('utf-8')
+        logger.info('{} disconnected.'.format(data))
+        plugin_manager.process_disconnect(
+            key_name=data)
+
+
 def get_station_mac(pkt):
     ds_field = pkt.getfieldval('FCfield') & 0x03
     if pkt.type == 0:
@@ -237,6 +250,10 @@ def main():
                               args=(config['interface'], channels))
     hopper.setDaemon(True)
     hopper.start()
+
+    expire_handler = threading.Thread(target=handle_expire)
+    expire_handler.setDaemon(True)
+    expire_handler.start()
 
     speak('Starting scanner')
     scapy.config.conf.iface = config['interface']
