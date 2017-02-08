@@ -14,11 +14,14 @@ from scapy.layers.dot11 import (
     Dot11, Dot11ProbeReq, Dot11ProbeResp, Dot11Beacon, sniff)
 from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
+from wifimonitor.plugin import PluginManager
 
 logger = logging.getLogger(__name__)
 redis_connection = redis.Redis()
 config = {}
 devices = {}
+
+plugin_manager = PluginManager()
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('-c', '--config',
@@ -96,16 +99,28 @@ def packet_handler(pkt):
             username = devices[mac]['username']
             device_name = devices[mac]['devicename']
             ignored = devices[mac]['ignored']
+
+            plugin_manager.process_connect(
+                mac=mac,
+                strength=strength,
+                username=username,
+                device_name=device_name,
+                ignored=ignored)
             if not ignored:
                 speak('Welcome {}'.format(username))
         else:
             vendor_name = get_mac_vendor(mac)
+            plugin_manager.process_connect(
+                mac=mac,
+                strength=strength,
+            )
             speak('Welcome guest')
 
         logger.info('{} {} "{}"'.format(
             mac, strength, device_name if mac in devices else vendor_name))
 
     update_mac(mac, strength)
+    plugin_manager.process_update(mac=mac, strength=strength)
 
     logger.debug('{} {}'.format(mac, strength))
 
@@ -213,6 +228,10 @@ def main():
         logger.setLevel(logging.INFO)
 
     channels = config.get('channels', range(1, 13+1))
+
+    plugin_dir = config.get('plugin_dir', None)
+    if plugin_dir:
+        plugin_manager.load_plugins(plugin_dir)
 
     hopper = threading.Thread(target=channel_hopper,
                               args=(config['interface'], channels))

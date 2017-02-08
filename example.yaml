@@ -12,3 +12,5 @@ users:
     00:00:00:00:00:01: mobile-phone
   ignored-devices:
     00:00:00:00:00:02: laptop
+
+plugin_dir: plugins
