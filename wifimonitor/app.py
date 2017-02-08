@@ -49,10 +49,18 @@ def handle_expire():
         if msg['type'] != 'pmessage':
             continue
 
-        data = msg['data'].decode('utf-8')
+        usernames = [
+            user['name']
+            for user in config['users']
+        ] if 'users' in config else []
+
+        key = msg['data'].decode('utf-8')
         logger.info('{} disconnected.'.format(data))
-        plugin_manager.process_disconnect(
-            key_name=data)
+
+        if key in usernames:
+            plugin_manager.user_offline(key)
+        else:
+            plugin_manager.process_disconnect(key_name=key)
 
 
 def get_station_mac(pkt):
@@ -155,6 +163,8 @@ def update_mac(mac, strength):
         update(device_name, strength)
 
         if not ignored:
+            if not redis_connection.exists(username):
+                plugin_manager.user_online(username)
             update(username, strength)
 
     else:
