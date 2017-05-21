@@ -55,7 +55,7 @@ def handle_expire():
         ] if 'users' in config else []
 
         key = msg['data'].decode('utf-8')
-        logger.info('{} disconnected.'.format(data))
+        logger.info('{} disconnected.'.format(key))
 
         if key in usernames:
             plugin_manager.user_offline(key)
