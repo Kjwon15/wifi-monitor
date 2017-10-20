@@ -172,10 +172,15 @@ def update_mac(mac, strength):
 
 def get_signal_strength(pkt):
     # 0 dB == 255
+
     try:
         strength = 256 + pkt.dbm_antsignal
+        if strength > 256:
+            # This might be bug...
+            return 0
     except:
         strength = ord(pkt.notdecoded[-4])
+
     return strength
 
 
