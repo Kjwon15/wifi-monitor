@@ -2,6 +2,7 @@ import glob
 import imp
 import os
 
+
 class PluginManager(object):
 
     def __init__(self):

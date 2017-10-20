@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 from os import path
+import sys
 
 
 PWD = path.abspath(path.dirname(__file__))
@@ -12,7 +13,7 @@ install_requires = [
     'gTTS>=1.0.6',
     'pyttsx>=1.1',
     'redis>=2.10.3',
-    'scapy>=2.3.1',
+    'scapy>=2.3.1' if sys.version_info < (3,) else 'scapy-python3>=0.21',
 ]
 
 setup(

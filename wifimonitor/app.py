@@ -12,7 +12,6 @@ import yaml
 import scapy.config
 from scapy.layers.dot11 import (
     Dot11, Dot11ProbeReq, Dot11ProbeResp, Dot11Beacon, sniff)
-from wifimonitor.tts import speak
 from wifimonitor.mac import get_mac_vendor
 from wifimonitor.plugin import PluginManager
 
@@ -45,6 +44,7 @@ def channel_hopper(iface, channels):
 def handle_expire():
     pubsub = redis_connection.pubsub()
     pubsub.psubscribe('__key*__:expired')
+    logger.info('Expire handler started')
     for msg in pubsub.listen():
         if msg['type'] != 'pmessage':
             continue
@@ -127,15 +127,12 @@ def packet_handler(pkt):
                 username=username,
                 device_name=device_name,
                 ignored=ignored)
-            if not ignored:
-                speak('Welcome {}'.format(username))
         else:
             vendor_name = get_mac_vendor(mac)
             plugin_manager.process_connect(
                 mac=mac,
                 strength=strength,
             )
-            speak('Welcome guest')
 
         logger.info('{} {} "{}"'.format(
             mac, strength, device_name if mac in devices else vendor_name))
@@ -175,7 +172,10 @@ def update_mac(mac, strength):
 
 def get_signal_strength(pkt):
     # 0 dB == 255
-    strength = ord(pkt.notdecoded[-4])
+    try:
+        strength = 256 + pkt.dbm_antsignal
+    except:
+        strength = ord(pkt.notdecoded[-4])
     return strength
 
 
@@ -265,10 +265,10 @@ def main():
     expire_handler.setDaemon(True)
     expire_handler.start()
 
-    speak('Starting scanner')
     scapy.config.conf.iface = config['interface']
     sniff(iface=config['interface'], prn=packet_handler,
           lfilter=packet_filter, filter='not subtype beacon', store=False)
+
 
 if __name__ == '__main__':
     main()
