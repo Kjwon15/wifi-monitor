@@ -6,6 +6,8 @@ import os
 class PluginManager(object):
 
     def __init__(self):
+        self.on_boot_handlers = []
+
         self.on_connect_handlers = []
         self.on_disconnect_handlers = []
         self.on_update_handlers = []
@@ -16,6 +18,10 @@ class PluginManager(object):
     def load_plugins(self, dir):
         for filename in glob.glob(os.path.join(dir, '*.py')):
             module = imp.load_source('plugin', filename)
+
+            on_boot = getattr(module, 'boot', None)
+            if on_boot:
+                self.on_boot_handlers.append(on_boot)
 
             on_connect = getattr(module, 'on_connect', None)
             if on_connect:
@@ -37,22 +43,44 @@ class PluginManager(object):
             if user_offline:
                 self.offline_handlers.append(user_offline)
 
+    def boot(self, *args, **kwargs):
+        for handler in self.on_boot_handlers:
+            try:
+                handler(*args, **kwargs)
+            except Exception as e:
+                print(e)
+
     def process_connect(self, *args, **kwargs):
         for handler in self.on_connect_handlers:
-            handler(*args, **kwargs)
+            try:
+                handler(*args, **kwargs)
+            except Exception as e:
+                print(e)
 
     def process_disconnect(self, *args, **kwargs):
         for handler in self.on_disconnect_handlers:
-            handler(*args, **kwargs)
+            try:
+                handler(*args, **kwargs)
+            except Exception as e:
+                print(e)
 
     def process_update(self, *args, **kwargs):
         for handler in self.on_update_handlers:
-            handler(*args, **kwargs)
+            try:
+                handler(*args, **kwargs)
+            except Exception as e:
+                print(e)
 
     def user_online(self, username):
         for handler in self.online_handlers:
-            handler(username)
+            try:
+                handler(username)
+            except Exception as e:
+                print(e)
 
     def user_offline(self, username):
         for handler in self.offline_handlers:
-            handler(username)
+            try:
+                handler(username)
+            except Exception as e:
+                print(e)

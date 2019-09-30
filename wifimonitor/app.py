@@ -41,6 +41,22 @@ def channel_hopper(iface, channels):
             time.sleep(1)
 
 
+def bootup():
+    users = set(map(
+        lambda x: x['name'],
+        config['users']
+    ))
+
+    alive_devices = set(map(
+        lambda x: x.decode('utf-8'),
+        redis_connection.keys('*')))
+
+    # TODO make mac list which is not user
+    alive_users = alive_devices & users
+
+    plugin_manager.boot(alive_users)
+
+
 def handle_expire():
     pubsub = redis_connection.pubsub()
     pubsub.psubscribe('__key*__:expired')
@@ -234,7 +250,7 @@ def main():
     if config_file:
         try:
             with open(config_file) as fp:
-                config.update(yaml.load(fp.read()))
+                config.update(yaml.safe_load(fp))
         except:
             # Cannot read configuration file
             pass
@@ -269,6 +285,8 @@ def main():
     expire_handler = threading.Thread(target=handle_expire)
     expire_handler.setDaemon(True)
     expire_handler.start()
+
+    bootup()
 
     scapy.config.conf.iface = config['interface']
     sniff(iface=config['interface'], prn=packet_handler,
